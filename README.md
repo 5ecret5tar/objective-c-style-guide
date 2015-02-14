@@ -1,8 +1,7 @@
-# NYTimes Objective-C Style Guide
+# Objective-C Style Guide
 
-This style guide outlines the coding conventions of the iOS teams at The New York Times. We welcome your feedback in [issues](https://github.com/NYTimes/objetive-c-style-guide/issues), [pull requests](https://github.com/NYTimes/objetive-c-style-guide/pulls) and [tweets](https://twitter.com/nytimesmobile). Also, [we're hiring](http://jobs.nytco.com/job/New-York-iOS-Developer-Job-NY/2572221/).
+This style guide outlines the coding conventions of the iOS team. It builds almost entirely off of a fork from the [New York Times iOS Team](https://github.com/NYTimes/objective-c-style-guide). 
 
-Thanks to all of [our contributors](https://github.com/NYTimes/objective-c-style-guide/contributors).
 
 ## Introduction
 
@@ -56,14 +55,13 @@ UIApplication.sharedApplication.delegate;
 ## Spacing
 
 * Indent using 4 spaces. Never indent with tabs. Be sure to set this preference in Xcode.
-* Method braces and other braces (`if`/`else`/`switch`/`while` etc.) always open on the same line as the statement but close on a new line.
+* Method braces and other braces (`if`/`else`/`switch`/`while` etc.) always open and close on the same line as the statement.
 
 **For example:**
 ```objc
 if (user.isHappy) {
 //Do something
-}
-else {
+} else {
 //Do something else
 }
 ```
@@ -81,6 +79,13 @@ if (!error) {
 }
 ```
 
+or
+
+```objc
+if (!error) { return success; }
+```
+
+
 **Not:**
 ```objc
 if (!error)
@@ -95,7 +100,7 @@ if (!error) return success;
 
 ### Ternary Operator
 
-The Ternary operator, ? , should only be used when it increases clarity or code neatness. A single condition is usually all that should be evaluated. Evaluating multiple conditions is usually more understandable as an if statement, or refactored into instance variables.
+The Ternary operator, ? , should only be used when it increases clarity or code neatness. A single condition is usually all that should be evaluated. Evaluating multiple conditions is usually more understandable as an if statement, or refactored into instance variables. **Do not nest ternary operators.**
 
 **For example:**
 ```objc
@@ -168,6 +173,14 @@ Property definitions should be used in place of naked instance variables wheneve
 
 When it comes to the variable qualifiers [introduced with ARC](https://developer.apple.com/library/ios/releasenotes/objectivec/rn-transitioningtoarc/Introduction/Introduction.html#//apple_ref/doc/uid/TP40011226-CH1-SW4), the qualifier (`__strong`, `__weak`, `__unsafe_unretained`, `__autoreleasing`) should be placed between the asterisks and the variable name, e.g., `NSString * __weak text`. 
 
+In ARC, use `strong`, and `weak` in place of `retain` and `assign` where applicable.
+
+#### 64-bit Compatibility
+
+Unless otherwise necessary, use Apple data types which act as wrappers around primitives and will therefore automatically be increased in size for 64-bit architectures. For example, use `CGFloat` in place of `float` which will be a `double` on 64-bit systems.
+
+More information in [Apple's 64-bit Transition Guide](https://developer.apple.com/library/ios/documentation/General/Conceptual/CocoaTouch64BitGuide/Introduction/Introduction.html)
+
 ## Naming
 
 Apple naming conventions should be adhered to wherever possible, especially those related to [memory management rules](https://developer.apple.com/library/mac/#documentation/Cocoa/Conceptual/MemoryMgmt/Articles/MemoryMgmt.html) ([NARC](http://stackoverflow.com/a/2865194/340508)).
@@ -186,7 +199,9 @@ UIButton *settingsButton;
 UIButton *setBut;
 ```
 
-A three letter prefix (e.g. `NYT`) should always be used for class names and constants, however may be omitted for Core Data entity names. Constants should be camel-case with all words capitalized and prefixed by the related class name for clarity.
+A two, three or four letter prefix denoting the company name (on business projects, e.g. `LUXE`) or the person's initials (on personal projects, e.g. `RP`) should always be used for class names and constants, however may be omitted for Core Data entity names. Constants should be camel-case with all words capitalized and prefixed by the related class name for clarity.
+
+You can set this in Xcode's project properties to be the default for any new classes created.
 
 **For example:**
 
@@ -202,7 +217,7 @@ static const NSTimeInterval fadetime = 1.7;
 
 Properties and local variables should be camel-case with the leading word being lowercase.
 
-Instance variables should be camel-case with the leading word being lowercase, and should be prefixed with an underscore. This is consistent with instance variables synthesized automatically by LLVM. **If LLVM can synthesize the variable automatically, then let it.**
+Instance variables should be camel-case with the leading word being lowercase, and should be prefixed with an underscore. This is consistent with instance variables synthesized automatically by LLVM. **If LLVM can synthesize the variable automatically, then let it. There is no reason for @synthesize in most modern ARC projects.**
 
 **For example:**
 
@@ -224,24 +239,24 @@ Block comments should generally be avoided, as code should be as self-documentin
 
 ## init and dealloc
 
-`dealloc` methods should be placed at the top of the implementation, directly after the `@synthesize` and `@dynamic` statements. `init` should be placed directly below the `dealloc` methods of any class.
+All standard `init` or custom instantiation / convenience methods should be placed at the top of the file under the class interface or any `@dynamic` statements. In ARC, you typically don't need a `dealloc` method unless you need to tear something down, but if you do implement one, it should follow the `init` method's implementation.
 
 `init` methods should be structured like this:
 
 ```objc
 - (instancetype)init {
-    self = [super init]; // or call the designated initializer
-    if (self) {
+    if (self = [super init]) { 
         // Custom initialization
     }
-
     return self;
 }
 ```
 
+being sure to use `instancetype` as the return type instead of the anonymous type `id` to enable better type checking at the compiler level.
+
 ## Literals
 
-`NSString`, `NSDictionary`, `NSArray`, and `NSNumber` literals should be used whenever creating immutable instances of those objects. Pay special care that `nil` values not be passed into `NSArray` and `NSDictionary` literals, as this will cause a crash.
+`NSString`, `NSDictionary`, `NSArray`, and `NSNumber` literals should be used whenever creating immutable instances of those objects. Pay special care that `nil` values not be passed into `NSArray` and `NSDictionary` literals, as this will cause a runtime crash.
 
 **For example:**
 
@@ -263,7 +278,7 @@ NSNumber *buildingZIPCode = [NSNumber numberWithInteger:10018];
 
 ## CGRect Functions
 
-When accessing the `x`, `y`, `width`, or `height` of a `CGRect`, always use the [`CGGeometry` functions](http://developer.apple.com/library/ios/#documentation/graphicsimaging/reference/CGGeometry/Reference/reference.html) instead of direct struct member access. From Apple's `CGGeometry` reference:
+When accessing the `x`, `y`, `width`, or `height` of a `CGRect`, try to always use the [`CGGeometry` functions](http://developer.apple.com/library/ios/#documentation/graphicsimaging/reference/CGGeometry/Reference/reference.html) instead of direct struct member access so your code is future proofed. From Apple's `CGGeometry` reference:
 
 > All functions described in this reference that take CGRect data structures as inputs implicitly standardize those rectangles before calculating their results. For this reason, your applications should avoid directly reading and writing the data stored in the CGRect data structure. Instead, use the functions described here to manipulate rectangles and to retrieve their characteristics.
 
@@ -296,7 +311,7 @@ Constants are preferred over in-line string literals or numbers, as they allow f
 **For example:**
 
 ```objc
-static NSString * const NYTAboutViewControllerCompanyName = @"The New York Times Company";
+static NSString *const NYTAboutViewControllerCompanyName = @"The New York Times Company";
 
 static const CGFloat NYTImageThumbnailHeight = 50.0;
 ```
@@ -359,10 +374,12 @@ Image names should be named consistently to preserve organization and developer 
 
 **For example:**
 
-* `RefreshBarButtonItem` / `RefreshBarButtonItem@2x` and `RefreshBarButtonItemSelected` / `RefreshBarButtonItemSelected@2x`
-* `ArticleNavigationBarWhite` / `ArticleNavigationBarWhite@2x` and `ArticleNavigationBarBlackSelected` / `ArticleNavigationBarBlackSelected@2x`.
+* `RefreshBarButtonItem`
+* `ArticleNavigationBarWhite`
+* `ArticleNavigationBarBlackSelected`
 
-Images that are used for a similar purpose should be grouped in respective groups in an Images folder.
+All images should be first placed within the `Assets` catalog in Xcode and referenced by the name given there, rather than specifying the `@2x`, `@3x`, etc versions directly.
+
 
 ## Booleans
 
@@ -426,6 +443,8 @@ Singleton objects should use a thread-safe pattern for creating their shared ins
 ```
 This will prevent [possible and sometimes prolific crashes](http://cocoasamurai.blogspot.com/2011/04/singletons-your-doing-them-wrong.html).
 
+The `Instance` substring within the name should match the functionality of what the class should do. For example, a `LocationManager` class structured as a singleton should have the instance named `sharedManager` instead of `sharedInstance`.
+
 ## Imports
 
 If there is more than one import statement, group the statements [together](http://ashfurrow.com/blog/structuring-modern-objective-c). Commenting each group is optional.
@@ -448,16 +467,4 @@ Note: For modules use the [@import](http://clang.llvm.org/docs/Modules.html#usin
 
 The physical files should be kept in sync with the Xcode project files in order to avoid file sprawl. Any Xcode groups created should be reflected by folders in the filesystem. Code should be grouped not only by type, but also by feature for greater clarity.
 
-When possible, always turn on "Treat Warnings as Errors" in the target's Build Settings and enable as many [additional warnings](http://boredzo.org/blog/archives/2009-11-07/warnings) as possible. If you need to ignore a specific warning, use [Clang's pragma feature](http://clang.llvm.org/docs/UsersManual.html#controlling-diagnostics-via-pragmas).
-
-# Other Objective-C Style Guides
-
-If ours doesn't fit your tastes, have a look at some other style guides:
-
-* [Google](http://google-styleguide.googlecode.com/svn/trunk/objcguide.xml)
-* [GitHub](https://github.com/github/objective-c-conventions)
-* [Adium](https://trac.adium.im/wiki/CodingStyle)
-* [Sam Soffes](https://gist.github.com/soffes/812796)
-* [CocoaDevCentral](http://cocoadevcentral.com/articles/000082.php)
-* [Luke Redpath](http://lukeredpath.co.uk/blog/my-objective-c-style-guide.html)
-* [Marcus Zarra](http://www.cimgf.com/zds-code-style-guide/)
+When possible, always turn on "Treat Warnings as Errors" in the target's Build Settings and enable as many [additional warnings](http://boredzo.org/blog/archives/2009-11-07/warnings) as possible. If you need to ignore a specific warning, use [Clang's pragma feature](http://clang.llvm.org/docs/UsersManual.html#controlling-diagnostics-via-pragmas). **Be sure to not hide any bugs or potential crashes by disabling Clang warnings needlessly.**

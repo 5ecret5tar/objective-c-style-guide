@@ -54,15 +54,31 @@ UIApplication.sharedApplication.delegate;
 
 ## Spacing
 
+* There should not be a space between the return and the method name. E.g. `- (void)methodName` NOT `- (void) methodName`
 * Indent using 4 spaces. Never indent with tabs. Be sure to set this preference in Xcode.
-* Method braces and other braces (`if`/`else`/`switch`/`while` etc.) always open and close on the same line as the statement.
+* Method braces and blocks always open and close on a new line after the statement:
 
 **For example:**
 ```objc
-if (user.isHappy) {
-//Do something
+- (void)method
+{
+    ----
+}
+
+[self.object methodWithBlock:^
+{
+    ----
+}];
+```
+
+* Other braces (`if`/`else`/`switch`/`while` etc.) always open and close on the same line as the statement:
+
+**For example:**
+```objc
+if (user.isHappy)  {
+    //Do something
 } else {
-//Do something else
+    //Do something else
 }
 ```
 * There should be exactly one blank line between methods to aid in visual clarity and organization. Whitespace within methods should separate functionality, but often there should probably be new methods.

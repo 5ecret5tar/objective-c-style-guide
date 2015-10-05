@@ -77,9 +77,9 @@ When coding with conditionals, the left hand margin of the code should be the "g
 - (void)someMethod 
 {
   if ([someOther boolValue]) {
-      // Do something short
-  } else {
       // Do something really verbose
+  } else {
+      // Do something really short
   }
 }
 ```
